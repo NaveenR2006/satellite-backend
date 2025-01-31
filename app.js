@@ -10,7 +10,14 @@ let jwt=require("jsonwebtoken")
 
 const mongodb = "mongodb+srv://naveen:naveen17@cluster0.e8nyh.mongodb.net/satellite";
 
-app.use(cors()); 
+// Configure CORS with specific options
+app.use(cors({
+  origin: ['https://satellite-frontend.vercel.app', 'http://localhost:5173'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
 app.use(express.json());
 
 mongoose.connect(mongodb)
