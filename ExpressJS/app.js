@@ -8,7 +8,7 @@ const port = 3000;
 let bcrypt=require("bcrypt")
 let jwt=require("jsonwebtoken")
 
-const mongodb = "mongodb://127.0.0.1:27017/satellite";
+const mongodb = "mongodb+srv://naveen:naveen17@cluster0.e8nyh.mongodb.net/satellite";
 
 app.use(cors()); 
 app.use(express.json());
