@@ -181,22 +181,47 @@ app.post('/api/addsatellite', async (req, res) => {
 // PUT API - Update an Existing Satellite
 app.put("/api/updatesatellite/:id", async (req, res) => {
   try {
-    const { id } = req.params; // Extract the 'id' from URL parameters
-    const updateData = req.body; // Updated details from the request body
+    const { id } = req.params;
+    const { noradId, ...updateData } = req.body; // Remove noradId from update data
+
+    // Convert string values to appropriate types
+    if (updateData.speed) updateData.speed = Number(updateData.speed);
+    if (updateData.altitude) updateData.altitude = Number(updateData.altitude);
+    if (updateData.latitude) updateData.latitude = Number(updateData.latitude);
+    if (updateData.longitude) updateData.longitude = Number(updateData.longitude);
+    if (updateData.visibility !== undefined) updateData.visibility = Boolean(updateData.visibility);
+    
+    // Add lastUpdated timestamp
+    updateData.lastUpdated = new Date();
+
+    console.log("Updating satellite with ID:", id);
+    console.log("Update data:", updateData);
 
     const updatedSatellite = await satelliteModel.findOneAndUpdate(
       { id },
-      updateData,
-      { new: true } // Return the updated document
+      { $set: updateData },
+      { 
+        new: true, // Return the updated document
+        runValidators: true // Run schema validators on update
+      }
     );
 
     if (!updatedSatellite) {
+      console.log("Satellite not found with ID:", id);
       return res.status(404).json({ message: "Satellite not found" });
     }
 
-    res.status(200).json({ message: "Satellite updated successfully", updatedSatellite });
+    console.log("Successfully updated satellite:", updatedSatellite);
+    res.status(200).json({ 
+      message: "Satellite updated successfully", 
+      satellite: updatedSatellite 
+    });
+
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Failed to update satellite", error: error.message });
+    console.error("Error updating satellite:", error);
+    res.status(500).json({ 
+      message: "Failed to update satellite", 
+      error: error.message 
+    });
   }
 });
