@@ -26,6 +26,7 @@ mongoose.connect(mongodb)
 
 const satelliteSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
+  noradId: { type: String }, 
   name: { type: String, required: true },
   orbitType: { type: String, required: true },
   speed: { type: Number, required: true },
@@ -142,6 +143,11 @@ app.post('/api/addsatellite', async (req, res) => {
     try {
         const satelliteData = req.body;
         
+        // Remove noradId if it's not provided
+        if (!satelliteData.noradId) {
+            delete satelliteData.noradId;
+        }
+
         // Log incoming request data for debugging
         console.log("Incoming satellite data:", satelliteData);
 
@@ -150,7 +156,7 @@ app.post('/api/addsatellite', async (req, res) => {
 
         res.status(201).json({ message: "Satellite added successfully", satellite: newSatellite });
     } catch (error) {
-        console.error("Add Satellite Error:", error.message); // Log detailed error
+        console.error("Error adding satellite:", error);
         res.status(500).json({ message: "Failed to add satellite", error: error.message });
     }
 });
@@ -178,4 +184,3 @@ app.put("/api/updatesatellite/:id", async (req, res) => {
     res.status(500).json({ message: "Failed to update satellite", error: error.message });
   }
 });
-
