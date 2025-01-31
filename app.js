@@ -20,9 +20,20 @@ app.use(cors({
 
 app.use(express.json());
 
+// Connect to MongoDB and handle index creation
 mongoose.connect(mongodb)
-  .then(() => {
+  .then(async () => {
     console.log("Connected to MongoDB successfully");
+    
+    // Get the collection and drop the problematic index
+    try {
+      const collection = mongoose.connection.collection('satellites');
+      await collection.dropIndex('noradId_1');
+      console.log("Successfully dropped noradId index");
+    } catch (error) {
+      console.log("Index might not exist, continuing...");
+    }
+    
     app.listen(port, () => {
       console.log(`Server is running at port ${port}`);
     });
@@ -33,7 +44,7 @@ mongoose.connect(mongodb)
 
 const satelliteSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
-  noradId: { type: String }, 
+  noradId: { type: String, required: false }, 
   name: { type: String, required: true },
   orbitType: { type: String, required: true },
   speed: { type: Number, required: true },
@@ -44,9 +55,11 @@ const satelliteSchema = new mongoose.Schema({
   addedAt: { type: Date, required: true ,default:Date.now},
   visibility: { type: Boolean, required:true },
   details: { type: String, required: true }
+},{
+  collation: { locale: 'en', strength: 2 }
 });
 
-
+satelliteSchema.index({ id: 1 }, { unique: true });
 
 const satelliteModel = mongoose.model("satellite", satelliteSchema);
 
@@ -148,13 +161,9 @@ app.delete("/api/delsatellite/:id", async (req, res) => {
 // POST API - Add a New Satellite
 app.post('/api/addsatellite', async (req, res) => {
     try {
-        const satelliteData = req.body;
+        // Remove noradId from the request body if it exists
+        const { noradId, ...satelliteData } = req.body;
         
-        // Remove noradId if it's not provided
-        if (!satelliteData.noradId) {
-            delete satelliteData.noradId;
-        }
-
         // Log incoming request data for debugging
         console.log("Incoming satellite data:", satelliteData);
 
